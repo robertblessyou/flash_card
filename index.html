@@ -217,12 +217,73 @@
  .card.back .card-face .meaning{font-size:21px}
  .card.back .card-face .cue{font-size:14px;line-height:1.35;padding:4px 6px}
 }
+
+/* Word forms are visible directly below the word and meaning. */
+.card.back .card-face .inline-form{font-size:16px;line-height:1.35;color:var(--muted);margin:0;width:100%;flex-shrink:0;text-align:center}
+@media(max-width:720px){.card.back .card-face .inline-form{font-size:15px;line-height:1.3}}
+@media(max-width:720px) and (max-height:590px){
+ .page{grid-template-rows:34px 30px 34px minmax(0,1fr) 12px}
+ .masthead{position:absolute;top:3px;right:8px;width:24px;height:34px;z-index:2}.masthead .brand{display:none}
+ .masthead .help-button{width:24px;height:34px;font-size:0;min-height:34px}.masthead .help-button:before{content:'?';font-size:16px;color:var(--green)}
+ .subject-switch{padding-right:27px}
+}
+@media(max-width:720px) and (max-height:540px){
+ .page{grid-template-rows:34px 30px 34px minmax(0,1fr);gap:1px}
+ .status{position:absolute;bottom:0;left:8px;right:8px;height:1px;overflow:hidden}
+ .card,.card.back{padding-top:3px;padding-bottom:3px}
+ .card .card-face{gap:1px}
+}
+@media(max-width:720px) and (max-height:540px){
+ .status:not(:empty){height:auto;padding:6px 8px;line-height:1.4;font-size:12px;background:#fff;border:1px solid var(--line);border-radius:6px;z-index:5;bottom:4px}
+}
+/* Four palettes share layout and preserve semantic familiarity colors. */
+:root{--panel:#edf1e8;--cue-bg:#f4f6ee;--audio:#2862bd;--audio-soft:#edf2e9;--word-ink:#244b3b}
+:root[data-theme=amber]{--ink:#493423;--green:#b65e16;--soft:#fff0d5;--cream:#fff7e8;--muted:#806e5c;--line:#eadcc7;--panel:#faf0dd;--cue-bg:#fcf2df;--audio:#b65e16;--audio-soft:#f8edda;--word-ink:#603b1c}
+:root[data-theme=morandi]{--ink:#46404a;--green:#796a7b;--soft:#e8e0e7;--cream:#eeeae5;--muted:#787079;--line:#ddd5dc;--panel:#e8e3e6;--cue-bg:#f0ebed;--audio:#667d90;--audio-soft:#eee9ec;--word-ink:#524856}
+:root[data-theme=cloud]{--ink:#393b40;--green:#484d53;--soft:#e8e6e1;--cream:#f0eee9;--muted:#737477;--line:#deddd9;--panel:#eae9e5;--cue-bg:#f1f0ed;--audio:#484d53;--audio-soft:#ecebea;--word-ink:#393b40}
+.word{color:var(--word-ink)}.cue,.quiz-feedback{background:var(--cue-bg)}.illustration:before{background:var(--soft)}.progress-section,.side-note{background:var(--panel)}.progress-track{background:var(--soft)}.badge,.tab-count{background:var(--soft);color:var(--green)}
+.subject-switch button[aria-pressed=true]{background:var(--green);border-color:var(--green);color:#fff}
+.card-audio-control.normal,.card-extra button{color:var(--audio)}.card-audio-control.normal .audio-disc{background:var(--audio)}.card-audio-control.slow .audio-disc{background:var(--audio-soft);border-color:var(--line);color:var(--muted)}.card.back .card-face .example .translation{color:var(--muted)}
+.theme-switch{display:flex;align-items:center;gap:2px;margin-right:auto;margin-left:16px}
+.theme-switch button{background:transparent;display:grid;place-items:center;width:32px;height:36px;padding:0;border-radius:6px}
+.theme-switch button span{width:20px;height:20px;border-radius:50%;background:var(--swatch);border:1px solid #9998;position:relative}
+.theme-switch button[aria-pressed=true] span{outline:2px solid var(--ink);outline-offset:2px}
+.theme-switch button[aria-pressed=true] span:after{content:'✓';position:absolute;inset:0;text-align:center;line-height:18px;font-size:13px;color:#fff}
+.theme-switch button[data-theme=cloud][aria-pressed=true] span:after{color:#393b40}
+@media(max-width:720px){
+ .page{grid-template-rows:30px 34px 16px 30px 34px minmax(0,1fr) 12px}
+ .masthead{position:static;width:auto;min-height:30px;height:30px}.masthead .brand{display:flex;gap:4px;font-size:13px;letter-spacing:0}.brand-light{margin-left:0}.brand-icon{width:18px;height:18px;font-size:16px}
+ .theme-switch{margin-left:6px;gap:0}.theme-switch button{width:27px;height:30px}.theme-switch button span{width:18px;height:18px}
+ .masthead .help-button{font-size:0;width:26px;height:30px;min-height:30px;padding:0}.masthead .help-button span{display:none}.masthead .help-button:before{content:'?';font-size:16px;color:var(--green)}
+ .subject-switch{padding-right:0}
+}
+@media(max-width:720px) and (max-height:590px){
+ .page{grid-template-rows:28px 30px 26px 30px minmax(0,1fr) 12px;gap:1px}
+ .masthead,.theme-switch button{height:28px;min-height:28px}
+ .subject-switch button{height:30px;min-height:30px}.tabs button{height:26px;min-height:26px}.selectors select,.shuffle-button{height:30px;min-height:30px}
+}
+@media(max-width:720px) and (max-height:540px){
+ .page{grid-template-rows:28px 30px 26px 30px minmax(0,1fr);gap:0}
+ .card .card-face{padding:0;gap:0}.card.back .card-face .word{font-size:28px}.card.back .card-face .meaning{font-size:20px}.card.back .card-face .inline-form{font-size:14px}
+}
+@media(max-width:720px) and (min-height:541px) and (max-height:590px){
+ .card .card-face{gap:1px;padding:0 1px}
+}
+:root[data-theme] .subject-switch button{border-color:var(--line);color:var(--muted)}
+:root[data-theme] .subject-switch button[aria-pressed=true]{background:var(--green);border-color:var(--green);color:#fff}
+:root[data-theme] .audio-button:first-child{background:var(--green)}
 </style>
 </head>
 <body>
 <div class="page">
 <header class="masthead">
   <a href="#" class="brand" aria-label="字感練習室首頁"><span class="brand-icon" aria-hidden="true">✦</span><span>字感<span class="brand-light">練習室</span></span></a>
+  <div class="theme-switch" role="group" aria-label="選擇配色">
+   <button data-theme="green" aria-label="綠色" aria-pressed="true" title="綠色"><span style="--swatch:#245b49"></span></button>
+   <button data-theme="amber" aria-label="暖橘黃" aria-pressed="false" title="暖橘黃"><span style="--swatch:#bf681a"></span></button>
+   <button data-theme="morandi" aria-label="莫蘭迪" aria-pressed="false" title="莫蘭迪"><span style="--swatch:#796a7b"></span></button>
+   <button data-theme="cloud" aria-label="雲舞白" aria-pressed="false" title="雲舞白"><span style="--swatch:#f0eee9"></span></button>
+  </div>
   <button class="help-button" id="tipsButton">讀書提示 <span aria-hidden="true">↗</span></button>
 </header>
 <section class="intro">
@@ -240,8 +301,7 @@
 <p class="status" id="status" role="status" aria-live="polite"></p>
 <footer><span>慢慢來，想起一次就多記住一點。</span><span>進度存在這個瀏覽器 · 手機與電腦分開記錄</span></footer>
 </div>
-<dialog id="tipsDialog" aria-labelledby="tipsTitle"><div class="dialog-heading"><span class="eyebrow">一次記一點</span><button id="closeTips" class="icon-button" aria-label="關閉考前建議">×</button></div><h2 id="tipsTitle">選好科目，再開始。</h2><ol class="tips-list"><li><strong>由淺到難，一課一課讀</strong><p>基礎 → 進階 → 挑戰，每課最多 10 字。分級依常用程度、詞形與用法安排。</p></li><li><strong>先猜，再翻面</strong><p>點字卡，同時看中文、記憶提示與例句。右下角聽單字，中央可聽例句或查看詞形。</p></li><li><strong>集中練習還不熟</strong><p>選本科全部字與「還不熟」，再用小測驗確認。兩科題庫與進度分開。</p></li></ol><div class="tip-note">進度保存在目前瀏覽器。發音使用裝置英語語音，請開啟音量。手機總覽以按鈕翻頁，不需捲動。</div><button class="primary full" id="startStudy">開始練習 →</button></dialog>
-<dialog id="formDialog" aria-labelledby="formTitle"><div class="dialog-heading"><h2 id="formTitle"></h2><button id="closeForm" class="icon-button" aria-label="關閉詞形說明">×</button></div><p id="formDescription"></p></dialog>
+<dialog id="tipsDialog" aria-labelledby="tipsTitle"><div class="dialog-heading"><span class="eyebrow">一次記一點</span><button id="closeTips" class="icon-button" aria-label="關閉考前建議">×</button></div><h2 id="tipsTitle">選好科目，再開始。</h2><ol class="tips-list"><li><strong>由淺到難，一課一課讀</strong><p>基礎 → 進階 → 挑戰，每課最多 10 字。分級依常用程度、詞形與用法安排。</p></li><li><strong>先猜，再翻面</strong><p>點字卡，同時看中文、記憶提示與例句。右下角聽單字，中央可聽例句，詞形直接顯示在單字下方。</p></li><li><strong>集中練習還不熟</strong><p>選本科全部字與「還不熟」，再用小測驗確認。兩科題庫與進度分開。</p></li></ol><div class="tip-note">進度保存在目前瀏覽器。發音使用裝置英語語音，請開啟音量。手機總覽以按鈕翻頁，不需捲動。</div><button class="primary full" id="startStudy">開始練習 →</button></dialog>
 <script>globalThis.WORDS = [
   {
     "word": "jewels",
@@ -2151,9 +2211,9 @@ function renderStudy() {
  if(!w){$('main').innerHTML=empty();return;}
  const accessibility=state.flipped?`${w.word}，${w.meaning}。${w.form}。${w.cue}。${w.example}。${w.translation}。點擊返回正面`:`${w.word}，點擊翻面查看中文意思`;
  const identity=`<div class="word-cluster">${illustration(w)}<div class="word-copy"><h2 class="word${longWord(w.word)}" lang="en">${esc(w.word)}</h2>${state.flipped?`<p class="meaning">${esc(w.meaning)}</p>`:''}</div></div>`;
- const body=state.flipped?`${identity}<div class="cue">${esc(w.cue)}</div><div class="example"><p lang="en">${esc(w.example)}</p><p class="translation">${esc(w.translation)}</p></div>`:`${identity}<p class="front-subtitle">先想想，它是什麼意思？</p><p class="flip-hint">點圖文翻面</p>`;
+ const body=state.flipped?`${identity}<p class="inline-form">${esc(w.form)}</p><div class="cue">${esc(w.cue)}</div><div class="example"><p lang="en">${esc(w.example)}</p><p class="translation">${esc(w.translation)}</p></div>`:`${identity}<p class="front-subtitle">先想想，它是什麼意思？</p><p class="flip-hint">點圖文翻面</p>`;
  const controls=state.roundDone?'<button class="review-button" data-action="repeat">↻ 再看一輪</button><button class="known-button" data-action="quiz">做個小測驗 →</button>':'<button class="review-button" data-action="markReview">↻ 還不熟</button><button class="known-button" data-action="markKnown">✓ 有印象</button>';
- $('main').innerHTML=`<div class="study-layout"><div class="card-column"><article class="card${state.flipped?' back':''}" data-detail="memory" aria-label="單字卡"><div class="card-navigation"><button data-action="previous" aria-label="上一張" ${state.position===0?'disabled':''}>‹</button><div class="card-position"><span>${state.roundDone?'這輪看完了 · ':''}${state.position+1} / ${state.queue.length} 張</span></div><button data-action="next" aria-label="下一張" ${state.position===state.queue.length-1?'disabled':''}>›</button></div><button id="flashcard" class="card-face" data-action="flip" aria-label="${esc(accessibility)}" aria-pressed="${state.flipped}">${body}</button><div class="card-audio" aria-label="發音"><button class="card-audio-control slow" data-action="slow"><span class="audio-disc">0.6×</span><span>慢速</span></button>${state.flipped?'<div class="card-extra"><button class="sentence-link" data-action="sentence">聽例句</button><button class="form-link" data-action="wordForm">詞形</button></div>':`<span class="card-familiarity">${badge(w.word)}</span>`}<button class="card-audio-control normal" data-action="speak"><span class="audio-disc">${speaker}</span><span>聽發音</span></button></div></article><div class="mark-row" aria-label="標記熟悉度">${controls}</div><p class="kbd-hint">空白鍵翻面 · ← → 換卡 · S 聽發音</p></div>${sideNote()}</div>`;
+ $('main').innerHTML=`<div class="study-layout"><div class="card-column"><article class="card${state.flipped?' back':''}" data-detail="memory" aria-label="單字卡"><div class="card-navigation"><button data-action="previous" aria-label="上一張" ${state.position===0?'disabled':''}>‹</button><div class="card-position"><span>${state.roundDone?'這輪看完了 · ':''}${state.position+1} / ${state.queue.length} 張</span></div><button data-action="next" aria-label="下一張" ${state.position===state.queue.length-1?'disabled':''}>›</button></div><button id="flashcard" class="card-face" data-action="flip" aria-label="${esc(accessibility)}" aria-pressed="${state.flipped}">${body}</button><div class="card-audio" aria-label="發音"><button class="card-audio-control slow" data-action="slow"><span class="audio-disc">0.6×</span><span>慢速</span></button>${state.flipped?'<div class="card-extra"><button class="sentence-link" data-action="sentence">聽例句</button></div>':`<span class="card-familiarity">${badge(w.word)}</span>`}<button class="card-audio-control normal" data-action="speak"><span class="audio-disc">${speaker}</span><span>聽發音</span></button></div></article><div class="mark-row" aria-label="標記熟悉度">${controls}</div><p class="kbd-hint">空白鍵翻面 · ← → 換卡 · S 聽發音</p></div>${sideNote()}</div>`;
 }
 function quizStart(words=currentSelection()) {state.mode='quiz';state.quiz=Study.shuffle(words).slice(0,10);state.qi=0;state.answered=false;state.correct=0;state.mistakes=[];state.complete=false;newChoices();render();}
 function newChoices(){state.choices=state.quiz[state.qi]?Study.makeOptions(WORDS,state.quiz[state.qi]):[];}
@@ -2206,7 +2266,6 @@ function changeSubject(id){
  saveWarning='';$('filterSelect').value='all';populateCourses();setQueue();render();setStatus();
 }
 const actions={
- wordForm:()=>{const w=currentWord();$('formTitle').textContent=w.word;$('formDescription').textContent=w.form;$('formDialog').showModal();},
  listPrevious:()=>{state.listPage--;updateList();},listNext:()=>{state.listPage++;updateList();},
  flip:()=>{state.flipped=!state.flipped;renderStudy();focusCard();},
  speak:()=>speak(),slow:()=>speak(.6),sentence:()=>speak(.85,true),
@@ -2226,15 +2285,24 @@ populateCourses();
 document.querySelector('.subject-switch').addEventListener('click',event=>{const b=event.target.closest('[data-subject]');if(b&&b.dataset.subject!==subject.id)changeSubject(b.dataset.subject);});
 $('groupSelect').value=state.group;$('groupSelect').addEventListener('change',selectChanged);$('filterSelect').addEventListener('change',selectChanged);
 $('shuffleButton').addEventListener('click',()=>{stopSpeech();setQueue(Study.shuffle(state.queue));renderStudy();setStatus('這一輪已換成隨機順序。');});
-$('closeForm').addEventListener('click',()=>{$('formDialog').close();});
 $('tipsButton').addEventListener('click',()=>{$('tipsDialog').showModal();});
 $('closeTips').addEventListener('click',()=>{$('tipsDialog').close();});
 $('startStudy').addEventListener('click',()=>{$('tipsDialog').close();});
 $('tipsDialog').addEventListener('click',e=>{if(e.target===$('tipsDialog')){const r=e.target.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)e.target.close();}});
 document.querySelector('.brand').addEventListener('click',e=>{e.preventDefault();changeMode('study');});
-document.addEventListener('keydown',e=>{if($('tipsDialog').open||$('formDialog').open||state.mode!=='study'||/INPUT|SELECT|TEXTAREA/.test(e.target.tagName)||e.ctrlKey||e.altKey||e.metaKey)return;if(e.code==='Space'&&(e.target===document.body||e.target.id==='flashcard')){e.preventDefault();actions.flip();}if(e.key==='ArrowRight'){e.preventDefault();actions.next();}if(e.key==='ArrowLeft'){e.preventDefault();actions.previous();}if(e.key.toLowerCase()==='s'){e.preventDefault();speak();}});
+document.addEventListener('keydown',e=>{if($('tipsDialog').open||state.mode!=='study'||/INPUT|SELECT|TEXTAREA/.test(e.target.tagName)||e.ctrlKey||e.altKey||e.metaKey)return;if(e.code==='Space'&&(e.target===document.body||e.target.id==='flashcard')){e.preventDefault();actions.flip();}if(e.key==='ArrowRight'){e.preventDefault();actions.next();}if(e.key==='ArrowLeft'){e.preventDefault();actions.previous();}if(e.key.toLowerCase()==='s'){e.preventDefault();speak();}});
 window.addEventListener('pagehide',stopSpeech);
 refreshVoices();if('speechSynthesis' in window)window.speechSynthesis.addEventListener('voiceschanged',refreshVoices);
+const themeColors={green:'#245b49',amber:'#bf681a',morandi:'#796a7b',cloud:'#484d53'};
+function applyTheme(theme){
+ if(!Object.hasOwn(themeColors,theme))theme='green';
+ document.documentElement.dataset.theme=theme;
+ document.querySelectorAll('.theme-switch button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.theme===theme)));
+ document.querySelector('meta[name="theme-color"]').content=themeColors[theme];
+}
+let savedTheme='green';try{savedTheme=localStorage.getItem('study-theme')||'green';}catch{}
+applyTheme(savedTheme);
+document.querySelector('.theme-switch').addEventListener('click',event=>{const b=event.target.closest('button[data-theme]');if(!b)return;applyTheme(b.dataset.theme);try{localStorage.setItem('study-theme',b.dataset.theme);}catch{}});
 setQueue();render();
 })();
 </script>
