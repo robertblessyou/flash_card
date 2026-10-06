@@ -282,6 +282,10 @@
 .card.back .card-audio{margin-top:-40px}
 .card-audio{pointer-events:none}.card-audio button{pointer-events:auto}
 .card-audio{position:relative;z-index:2}
+.card-position{display:flex;flex-direction:column;align-items:center;gap:2px}
+.card-navigation .auto-toggle{font-size:12px;line-height:1.2;min-height:24px;height:24px;padding:3px 10px;border:1px solid var(--line);border-radius:12px;background:var(--soft);color:var(--green);white-space:nowrap}
+.card-navigation .auto-toggle[aria-pressed=true]{background:var(--green);color:white;border-color:var(--green)}
+@media(max-width:720px){.card-position>span{font-size:12px;line-height:14px}}
 </style>
 </head>
 <body>
@@ -2189,6 +2193,7 @@ let progress=Study.readSubjectProgress(storage,subject.id);
 const state = {mode:'study',group:'0',filter:'all',query:'',queue:[],position:0,flipped:false,quiz:[],qi:0,answered:false,correct:0,mistakes:[],choices:[],complete:false,roundDone:false,listPage:0};
 let utterance = null;
 let voices = [];
+const autoPlay={active:false,token:0,timer:null,repeat:1};
 let saveWarning = '';
 const speaker = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4V5Z"/><path d="M15 8a6 6 0 0 1 0 8M18 5a10 10 0 0 1 0 14"/></svg>';
 const audio = (action, label, secondary=false) => `<button class="audio-button${secondary?' secondary':''}" data-action="${action}">${speaker}${label}</button>`;
@@ -2223,7 +2228,7 @@ function renderStudy() {
  const identity=`<div class="word-cluster">${illustration(w)}<div class="word-copy"><h2 class="word${longWord(w.word)}" lang="en">${esc(w.word)}</h2>${state.flipped?`<p class="meaning">${esc(w.meaning)}</p>`:''}</div></div>`;
  const body=state.flipped?`${identity}<p class="inline-form">${esc(w.form)}</p><div class="cue">${esc(w.cue)}</div><div class="example"><p lang="en">${esc(w.example)}</p><p class="translation">${esc(w.translation)}</p><button class="sentence-button" data-action="sentence">${speaker}<span>聽例句</span></button></div>`:`${identity}<p class="front-subtitle">先想想，它是什麼意思？</p><p class="flip-hint">點圖文翻面</p>`;
  const controls=state.roundDone?'<button class="review-button" data-action="repeat">↻ 再看一輪</button><button class="known-button" data-action="quiz">做個小測驗 →</button>':'<button class="review-button" data-action="markReview">↻ 還不熟</button><button class="known-button" data-action="markKnown">✓ 有印象</button>';
- $('main').innerHTML=`<div class="study-layout"><div class="card-column"><article class="card${state.flipped?' back':''}" data-detail="memory" aria-label="單字卡"><div class="card-navigation"><button data-action="previous" aria-label="上一張" ${state.position===0?'disabled':''}>‹</button><div class="card-position"><span>${state.roundDone?'這輪看完了 · ':''}${state.position+1} / ${state.queue.length} 張</span></div><button data-action="next" aria-label="下一張" ${state.position===state.queue.length-1?'disabled':''}>›</button></div><div class="card-face"><button id="flashcard" class="flip-target" data-action="flip" aria-label="${esc(accessibility)}" aria-pressed="${state.flipped}"></button>${body}</div><div class="card-audio" aria-label="發音"><button class="card-audio-control slow" data-action="slow"><span class="audio-disc">0.6×</span><span>慢速</span></button>${state.flipped?'':`<span class="card-familiarity">${badge(w.word)}</span>`}<button class="card-audio-control normal" data-action="speak"><span class="audio-disc">${speaker}</span><span>聽發音</span></button></div></article><div class="mark-row" aria-label="標記熟悉度">${controls}</div><p class="kbd-hint">空白鍵翻面 · ← → 換卡 · S 聽發音</p></div>${sideNote()}</div>`;
+ $('main').innerHTML=`<div class="study-layout"><div class="card-column"><article class="card${state.flipped?' back':''}" data-detail="memory" aria-label="單字卡"><div class="card-navigation"><button data-action="previous" aria-label="上一張" ${state.position===0?'disabled':''}>‹</button><div class="card-position"><span>${state.roundDone?'這輪看完了 · ':''}${state.position+1} / ${state.queue.length} 張${autoPlay.active?` · 第 ${autoPlay.repeat}/3 遍`:''}</span><button class="auto-toggle" data-action="autoPlay" aria-pressed="${autoPlay.active}">${autoPlay.active?'■ 停止自動':'▶ 自動播放'}</button></div><button data-action="next" aria-label="下一張" ${state.position===state.queue.length-1?'disabled':''}>›</button></div><div class="card-face"><button id="flashcard" class="flip-target" data-action="flip" aria-label="${esc(accessibility)}" aria-pressed="${state.flipped}"></button>${body}</div><div class="card-audio" aria-label="發音"><button class="card-audio-control slow" data-action="slow"><span class="audio-disc">0.6×</span><span>慢速</span></button>${state.flipped?'':`<span class="card-familiarity">${badge(w.word)}</span>`}<button class="card-audio-control normal" data-action="speak"><span class="audio-disc">${speaker}</span><span>聽發音</span></button></div></article><div class="mark-row" aria-label="標記熟悉度">${controls}</div><p class="kbd-hint">空白鍵翻面 · ← → 換卡 · S 聽發音</p></div>${sideNote()}</div>`;
 }
 function quizStart(words=currentSelection()) {state.mode='quiz';state.quiz=Study.shuffle(words).slice(0,10);state.qi=0;state.answered=false;state.correct=0;state.mistakes=[];state.complete=false;newChoices();render();}
 function newChoices(){state.choices=state.quiz[state.qi]?Study.makeOptions(WORDS,state.quiz[state.qi]):[];}
@@ -2243,9 +2248,44 @@ function updateList(){const selected=currentSelection(state.query);const pages=M
 function render(){stats();modeTabs();document.querySelector('.tab-count').textContent=WORDS.length;if(state.mode==='study')renderStudy();else if(state.mode==='quiz')renderQuiz();else renderList();}
 function focusCard(){const card=$('flashcard');if(card)card.focus({preventScroll:true});}
 function advance(direction){state.position=Math.max(0,Math.min(state.queue.length-1,state.position+direction));state.flipped=false;state.roundDone=false;renderStudy();focusCard();}
-function mark(value){const w=currentWord();if(!w)return;progress[w.word]=value;save();if(state.position<state.queue.length-1)advance(1);else{state.roundDone=true;renderStudy();focusCard();}setStatus(`${w.word} 已標記為「${value==='known'?'有印象':'還不熟'}」。`);}
+function mark(value){stopSpeech();const w=currentWord();if(!w)return;progress[w.word]=value;save();if(state.position<state.queue.length-1)advance(1);else{state.roundDone=true;renderStudy();focusCard();}setStatus(`${w.word} 已標記為「${value==='known'?'有印象':'還不熟'}」。`);}
 function refreshVoices(){if('speechSynthesis' in window)voices=window.speechSynthesis.getVoices();}
-function stopSpeech(){if('speechSynthesis' in window)window.speechSynthesis.cancel();utterance=null;}
+function stopSpeech(){stopAutoPlay();if('speechSynthesis' in window)window.speechSynthesis.cancel();utterance=null;}
+function updateAutoControl(){
+ const button=document.querySelector('.auto-toggle');if(!button)return;
+ button.textContent=autoPlay.active?'■ 停止自動':'▶ 自動播放';button.setAttribute('aria-pressed',String(autoPlay.active));
+ const counter=document.querySelector('.card-position>span');if(counter)counter.textContent=`${state.position+1} / ${state.queue.length} 張${autoPlay.active?` · 第 ${autoPlay.repeat}/3 遍`:''}`;
+}
+function stopAutoPlay(){autoPlay.active=false;autoPlay.token++;clearTimeout(autoPlay.timer);autoPlay.timer=null;updateAutoControl();}
+function autoDelay(callback,delay,token){
+ clearTimeout(autoPlay.timer);autoPlay.timer=setTimeout(()=>{autoPlay.timer=null;if(autoPlay.active&&autoPlay.token===token)callback();},delay);
+}
+function autoSpeak(text,language,token,done){
+ if(!autoPlay.active||autoPlay.token!==token)return;
+ refreshVoices();const speech=new SpeechSynthesisUtterance(text);utterance=speech;
+ const chinese=language==='zh-TW';const matches=voices.filter(v=>chinese?/^zh([-_]|$)/i.test(v.lang):/^en([-_]|$)/i.test(v.lang));
+ const preferred=matches.find(v=>v.lang.toLowerCase()===language.toLowerCase()&&v.localService)||matches.find(v=>v.lang.toLowerCase()===language.toLowerCase())||matches[0];
+ speech.lang=language;speech.rate=chinese?.9:.85;speech.pitch=1;if(preferred)speech.voice=preferred;
+ speech.onend=()=>{if(!autoPlay.active||autoPlay.token!==token||utterance!==speech)return;utterance=null;done();};
+ speech.onerror=()=>{if(!autoPlay.active||autoPlay.token!==token||utterance!==speech)return;stopSpeech();setStatus('自動播放已停止，請確認中英文語音、音量與網路後重試。');};
+ try{window.speechSynthesis.speak(speech);}catch(_){stopSpeech();setStatus('自動播放未能開始，請再按一次或換 Safari／Chrome。');}
+}
+function playAutoWord(token){
+ if(!autoPlay.active||autoPlay.token!==token)return;
+ const w=currentWord();updateAutoControl();
+ autoSpeak(w.word,'en-US',token,()=>autoDelay(()=>autoSpeak(w.meaning,'zh-TW',token,()=>autoDelay(()=>{
+  if(autoPlay.repeat<3){autoPlay.repeat++;updateAutoControl();playAutoWord(token);}
+  else{autoPlay.repeat=1;state.position=(state.position+1)%state.queue.length;state.flipped=true;renderStudy();playAutoWord(token);}
+ },2000,token)),400,token));
+}
+function toggleAutoPlay(){
+ if(autoPlay.active){stopSpeech();setStatus();return;}
+ if(!('speechSynthesis' in window)||!('SpeechSynthesisUtterance' in window)){setStatus('這個瀏覽器無法自動朗讀，請用 Safari、Chrome 或 Edge。');return;}
+ refreshVoices();
+ if(voices.length&&(!voices.some(v=>/^en([-_]|$)/i.test(v.lang))||!voices.some(v=>/^zh([-_]|$)/i.test(v.lang)))){setStatus('自動播放需要中英文語音，請到裝置設定下載後重試。');return;}
+ stopSpeech();state.mode='study';state.group='all';state.filter='all';$('groupSelect').value='all';$('filterSelect').value='all';setQueue(WORDS);
+ autoPlay.active=true;autoPlay.repeat=1;state.flipped=true;render();setStatus();playAutoWord(autoPlay.token);
+}
 function speak(rate=0.85,sentence=false){
  const w=currentWord();if(!w)return;
  if(!('speechSynthesis' in window)||!('SpeechSynthesisUtterance' in window)){setStatus('這個瀏覽器無法朗讀，請用 Safari、Chrome 或 Edge 開啟。');return;}
@@ -2262,7 +2302,7 @@ function speak(rate=0.85,sentence=false){
 }
 function changeMode(mode){stopSpeech();setStatus();state.mode=mode;if(mode==='list'){state.group='all';$('groupSelect').value='all';state.query='';state.listPage=0;}if(mode==='study')setQueue();if(mode==='quiz')quizStart();else render();}
 function selectChanged(){stopSpeech();state.group=$('groupSelect').value;state.filter=$('filterSelect').value;state.query='';state.listPage=0;if(state.mode==='quiz')quizStart();else{setQueue();render();}setStatus();}
-function nextGroup(){let group=state.group==='all'?0:Number(state.group)+1;if(group>=subject.courses.length)group=0;state.group=String(group);state.filter='all';$('groupSelect').value=state.group;$('filterSelect').value='all';state.mode='study';setQueue();render();focusCard();}
+function nextGroup(){stopSpeech();let group=state.group==='all'?0:Number(state.group)+1;if(group>=subject.courses.length)group=0;state.group=String(group);state.filter='all';$('groupSelect').value=state.group;$('filterSelect').value='all';state.mode='study';setQueue();render();focusCard();}
 function populateCourses(){
  $('groupSelect').innerHTML=subject.courses.map(c=>`<option value="${c.id}">${c.label}</option>`).join('')+`<option value="all">本科全部 ${WORDS.length} 字</option>`;
  $('groupSelect').value=state.group;
@@ -2276,12 +2316,13 @@ function changeSubject(id){
  saveWarning='';$('filterSelect').value='all';populateCourses();setQueue();render();setStatus();
 }
 const actions={
+ autoPlay:toggleAutoPlay,
  listPrevious:()=>{state.listPage--;updateList();},listNext:()=>{state.listPage++;updateList();},
  flip:()=>{state.flipped=!state.flipped;renderStudy();focusCard();},
  speak:()=>speak(),slow:()=>speak(.6),sentence:()=>speak(.85,true),
  markReview:()=>mark('review'),markKnown:()=>mark('known'),
  previous:()=>{stopSpeech();advance(-1);},next:()=>{stopSpeech();advance(1);},
- repeat:()=>{setQueue(state.queue);render();focusCard();},
+ repeat:()=>{stopSpeech();setQueue(state.queue);render();focusCard();},
  quiz:()=>{stopSpeech();quizStart();},study:()=>changeMode('study'),nextGroup,
  showAll:()=>{state.group='all';state.filter='all';$('groupSelect').value='all';$('filterSelect').value='all';state.mode='study';setQueue();render();focusCard();},
  openWord:button=>{const words=currentSelection(state.query);state.mode='study';setQueue(words);state.position=state.queue.findIndex(w=>w.word===button.dataset.word);state.flipped=true;render();focusCard();},
@@ -2320,6 +2361,7 @@ $('tipsDialog').addEventListener('click',e=>{if(e.target===$('tipsDialog')){cons
 document.querySelector('.brand').addEventListener('click',e=>{e.preventDefault();changeMode('study');});
 document.addEventListener('keydown',e=>{if($('tipsDialog').open||state.mode!=='study'||/INPUT|SELECT|TEXTAREA/.test(e.target.tagName)||e.ctrlKey||e.altKey||e.metaKey)return;if(e.code==='Space'&&(e.target===document.body||e.target.id==='flashcard')){e.preventDefault();actions.flip();}if(e.key==='ArrowRight'){e.preventDefault();actions.next();}if(e.key==='ArrowLeft'){e.preventDefault();actions.previous();}if(e.key.toLowerCase()==='s'){e.preventDefault();speak();}});
 window.addEventListener('pagehide',stopSpeech);
+document.addEventListener('visibilitychange',()=>{if(document.hidden&&autoPlay.active)stopSpeech();});
 refreshVoices();if('speechSynthesis' in window)window.speechSynthesis.addEventListener('voiceschanged',refreshVoices);
 const themeColors={green:'#245b49',amber:'#bf681a',morandi:'#796a7b',cloud:'#484d53'};
 function applyTheme(theme){
