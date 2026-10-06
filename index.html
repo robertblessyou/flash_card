@@ -272,6 +272,16 @@
 :root[data-theme] .subject-switch button{border-color:var(--line);color:var(--muted)}
 :root[data-theme] .subject-switch button[aria-pressed=true]{background:var(--green);border-color:var(--green);color:#fff}
 :root[data-theme] .audio-button:first-child{background:var(--green)}
+/* A separate flip target keeps sentence audio outside the flip button. */
+.card .card-face{position:relative;touch-action:pan-y;user-select:none}
+.flip-target{position:absolute;inset:0;width:100%;height:100%;min-height:0;padding:0;background:transparent;border-radius:10px}
+.card .card-face>:not(.flip-target){position:relative;pointer-events:none}
+.card .card-face .sentence-button{pointer-events:auto;display:inline-flex;align-items:center;justify-content:center;gap:6px;align-self:center;min-height:36px;padding:5px 12px;border:1px solid var(--line);border-radius:18px;background:var(--audio-soft);color:var(--audio);font-size:14px;line-height:1.2}
+.sentence-button svg{width:17px;height:17px}
+.card.back .card-audio{margin-top:-32px}
+.card.back .card-audio{margin-top:-40px}
+.card-audio{pointer-events:none}.card-audio button{pointer-events:auto}
+.card-audio{position:relative;z-index:2}
 </style>
 </head>
 <body>
@@ -301,7 +311,7 @@
 <p class="status" id="status" role="status" aria-live="polite"></p>
 <footer><span>慢慢來，想起一次就多記住一點。</span><span>進度存在這個瀏覽器 · 手機與電腦分開記錄</span></footer>
 </div>
-<dialog id="tipsDialog" aria-labelledby="tipsTitle"><div class="dialog-heading"><span class="eyebrow">一次記一點</span><button id="closeTips" class="icon-button" aria-label="關閉考前建議">×</button></div><h2 id="tipsTitle">選好科目，再開始。</h2><ol class="tips-list"><li><strong>由淺到難，一課一課讀</strong><p>基礎 → 進階 → 挑戰，每課最多 10 字。分級依常用程度、詞形與用法安排。</p></li><li><strong>先猜，再翻面</strong><p>點字卡，同時看中文、記憶提示與例句。右下角聽單字，中央可聽例句，詞形直接顯示在單字下方。</p></li><li><strong>集中練習還不熟</strong><p>選本科全部字與「還不熟」，再用小測驗確認。兩科題庫與進度分開。</p></li></ol><div class="tip-note">進度保存在目前瀏覽器。發音使用裝置英語語音，請開啟音量。手機總覽以按鈕翻頁，不需捲動。</div><button class="primary full" id="startStudy">開始練習 →</button></dialog>
+<dialog id="tipsDialog" aria-labelledby="tipsTitle"><div class="dialog-heading"><span class="eyebrow">一次記一點</span><button id="closeTips" class="icon-button" aria-label="關閉考前建議">×</button></div><h2 id="tipsTitle">選好科目，再開始。</h2><ol class="tips-list"><li><strong>由淺到難，一課一課讀</strong><p>基礎 → 進階 → 挑戰，每課最多 10 字。分級依常用程度、詞形與用法安排。</p></li><li><strong>先猜，再翻面</strong><p>點字卡，同時看中文、記憶提示與例句；左右滑可換卡。右下角聽單字，例句下方可聽整句，詞形直接顯示在單字下方。</p></li><li><strong>集中練習還不熟</strong><p>選本科全部字與「還不熟」，再用小測驗確認。兩科題庫與進度分開。</p></li></ol><div class="tip-note">進度保存在目前瀏覽器。發音使用裝置英語語音，請開啟音量。手機總覽以按鈕翻頁，不需捲動。</div><button class="primary full" id="startStudy">開始練習 →</button></dialog>
 <script>globalThis.WORDS = [
   {
     "word": "jewels",
@@ -2211,9 +2221,9 @@ function renderStudy() {
  if(!w){$('main').innerHTML=empty();return;}
  const accessibility=state.flipped?`${w.word}，${w.meaning}。${w.form}。${w.cue}。${w.example}。${w.translation}。點擊返回正面`:`${w.word}，點擊翻面查看中文意思`;
  const identity=`<div class="word-cluster">${illustration(w)}<div class="word-copy"><h2 class="word${longWord(w.word)}" lang="en">${esc(w.word)}</h2>${state.flipped?`<p class="meaning">${esc(w.meaning)}</p>`:''}</div></div>`;
- const body=state.flipped?`${identity}<p class="inline-form">${esc(w.form)}</p><div class="cue">${esc(w.cue)}</div><div class="example"><p lang="en">${esc(w.example)}</p><p class="translation">${esc(w.translation)}</p></div>`:`${identity}<p class="front-subtitle">先想想，它是什麼意思？</p><p class="flip-hint">點圖文翻面</p>`;
+ const body=state.flipped?`${identity}<p class="inline-form">${esc(w.form)}</p><div class="cue">${esc(w.cue)}</div><div class="example"><p lang="en">${esc(w.example)}</p><p class="translation">${esc(w.translation)}</p><button class="sentence-button" data-action="sentence">${speaker}<span>聽例句</span></button></div>`:`${identity}<p class="front-subtitle">先想想，它是什麼意思？</p><p class="flip-hint">點圖文翻面</p>`;
  const controls=state.roundDone?'<button class="review-button" data-action="repeat">↻ 再看一輪</button><button class="known-button" data-action="quiz">做個小測驗 →</button>':'<button class="review-button" data-action="markReview">↻ 還不熟</button><button class="known-button" data-action="markKnown">✓ 有印象</button>';
- $('main').innerHTML=`<div class="study-layout"><div class="card-column"><article class="card${state.flipped?' back':''}" data-detail="memory" aria-label="單字卡"><div class="card-navigation"><button data-action="previous" aria-label="上一張" ${state.position===0?'disabled':''}>‹</button><div class="card-position"><span>${state.roundDone?'這輪看完了 · ':''}${state.position+1} / ${state.queue.length} 張</span></div><button data-action="next" aria-label="下一張" ${state.position===state.queue.length-1?'disabled':''}>›</button></div><button id="flashcard" class="card-face" data-action="flip" aria-label="${esc(accessibility)}" aria-pressed="${state.flipped}">${body}</button><div class="card-audio" aria-label="發音"><button class="card-audio-control slow" data-action="slow"><span class="audio-disc">0.6×</span><span>慢速</span></button>${state.flipped?'<div class="card-extra"><button class="sentence-link" data-action="sentence">聽例句</button></div>':`<span class="card-familiarity">${badge(w.word)}</span>`}<button class="card-audio-control normal" data-action="speak"><span class="audio-disc">${speaker}</span><span>聽發音</span></button></div></article><div class="mark-row" aria-label="標記熟悉度">${controls}</div><p class="kbd-hint">空白鍵翻面 · ← → 換卡 · S 聽發音</p></div>${sideNote()}</div>`;
+ $('main').innerHTML=`<div class="study-layout"><div class="card-column"><article class="card${state.flipped?' back':''}" data-detail="memory" aria-label="單字卡"><div class="card-navigation"><button data-action="previous" aria-label="上一張" ${state.position===0?'disabled':''}>‹</button><div class="card-position"><span>${state.roundDone?'這輪看完了 · ':''}${state.position+1} / ${state.queue.length} 張</span></div><button data-action="next" aria-label="下一張" ${state.position===state.queue.length-1?'disabled':''}>›</button></div><div class="card-face"><button id="flashcard" class="flip-target" data-action="flip" aria-label="${esc(accessibility)}" aria-pressed="${state.flipped}"></button>${body}</div><div class="card-audio" aria-label="發音"><button class="card-audio-control slow" data-action="slow"><span class="audio-disc">0.6×</span><span>慢速</span></button>${state.flipped?'':`<span class="card-familiarity">${badge(w.word)}</span>`}<button class="card-audio-control normal" data-action="speak"><span class="audio-disc">${speaker}</span><span>聽發音</span></button></div></article><div class="mark-row" aria-label="標記熟悉度">${controls}</div><p class="kbd-hint">空白鍵翻面 · ← → 換卡 · S 聽發音</p></div>${sideNote()}</div>`;
 }
 function quizStart(words=currentSelection()) {state.mode='quiz';state.quiz=Study.shuffle(words).slice(0,10);state.qi=0;state.answered=false;state.correct=0;state.mistakes=[];state.complete=false;newChoices();render();}
 function newChoices(){state.choices=state.quiz[state.qi]?Study.makeOptions(WORDS,state.quiz[state.qi]):[];}
@@ -2279,6 +2289,24 @@ const actions={
  quizNext:()=>{stopSpeech();if(!state.answered)return;if(state.qi<state.quiz.length-1){state.qi++;state.answered=false;newChoices();renderQuiz();const first=document.querySelector('.option');if(first)first.focus({preventScroll:true});}else{state.complete=true;renderQuiz();const first=document.querySelector('.result-actions button');if(first)first.focus({preventScroll:true});}},
  reviewMistakes:()=>{state.mode='study';setQueue(state.mistakes);render();focusCard();setStatus('正在複習本輪錯題；換組別或篩選條件可返回一般字卡。');}
 };
+let swipeStart=null,suppressCardClickUntil=0;
+$('main').addEventListener('pointerdown',event=>{
+ if(state.mode!=='study'||!event.isPrimary||event.button!==0)return;
+ const card=event.target.closest('.card');if(!card)return;
+ if(event.target.closest('button:not(.flip-target)'))return;
+ swipeStart={id:event.pointerId,x:event.clientX,y:event.clientY,card};
+});
+$('main').addEventListener('pointerup',event=>{
+ const start=swipeStart;swipeStart=null;
+ if(!start||start.id!==event.pointerId||!start.card.isConnected)return;
+ const dx=event.clientX-start.x,dy=event.clientY-start.y;
+ if(Math.abs(dx)<50||Math.abs(dx)<Math.abs(dy)*1.5)return;
+ suppressCardClickUntil=performance.now()+400;
+ if(dx<0&&state.position<state.queue.length-1)actions.next();
+ if(dx>0&&state.position>0)actions.previous();
+});
+$('main').addEventListener('pointercancel',()=>{swipeStart=null;});
+$('main').addEventListener('click',event=>{if(event.target.closest('.card')&&performance.now()<suppressCardClickUntil){event.preventDefault();event.stopImmediatePropagation();}},true);
 $('main').addEventListener('click',event=>{const button=event.target.closest('[data-action]');if(button&&!button.disabled&&actions[button.dataset.action])actions[button.dataset.action](button);});
 document.querySelector('.tabs').addEventListener('click',event=>{const button=event.target.closest('[data-mode]');if(button)changeMode(button.dataset.mode);});
 populateCourses();
