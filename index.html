@@ -293,6 +293,28 @@
 .exam-picker{display:flex;align-items:center}
 @media(max-width:720px){.exam-picker select{min-height:28px;height:28px}}
 </style>
+<style>#tour-layer{position:fixed;inset:0;z-index:10000;color:#253c34;font-family:-apple-system,BlinkMacSystemFont,"PingFang TC",sans-serif}
+#tour-layer[hidden]{display:none}
+.tour-shade{position:absolute;background:#132e26b8;pointer-events:none}
+.tour-highlight{position:absolute;border:2px solid #a6d4ac;border-radius:10px;box-shadow:0 0 0 3px #fff5;pointer-events:none}
+.tour-bubble{position:absolute;width:min(360px,calc(100vw - 16px));padding:18px;background:#fffef9;border:1px solid #d7e2d0;border-radius:16px;box-shadow:0 12px 40px #122c2633;max-height:calc(100dvh - 16px);overflow:auto;text-align:left}
+.tour-bubble h2{margin:8px 0;font-size:22px;color:#245b49;line-height:1.35;letter-spacing:0}
+.tour-bubble p{font-size:15px;line-height:1.7;margin:8px 0;color:#53685a}
+.tour-kicker{font-size:12px;color:#637769;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.tour-bubble button{font:inherit;min-height:44px;border-radius:8px;border:1px solid #dce4d5;padding:9px 13px;background:white;color:#245b49;cursor:pointer}
+.tour-bubble button:disabled{opacity:.45;cursor:default}
+.tour-bubble button:focus-visible{outline:3px solid #286cb1;outline-offset:2px}
+.tour-bubble .tour-primary{background:#245b49;color:white;border-color:#245b49}
+.tour-actions{display:flex;justify-content:space-between;gap:8px;margin-top:14px}
+.tour-actions button{flex:1}
+.tour-bubble .tour-skip{min-height:32px;padding:4px 7px;font-size:12px;border:0;background:transparent}
+.tour-links{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.tour-links button{font-size:13px;flex:1}
+.tour-device{font-size:16px!important;font-weight:700;color:#245b49!important}
+.tour-fine{font-size:12px!important;color:#6c776d!important}
+@media(max-height:590px){.tour-bubble{padding:12px 14px}.tour-bubble h2{font-size:20px;margin:5px 0}.tour-bubble p{font-size:14px;line-height:1.55;margin:6px 0}.tour-actions{margin-top:10px}}
+@media(prefers-reduced-motion:reduce){#tour-layer *{scroll-behavior:auto!important}}
+</style>
 </head>
 <body>
 <div class="page">
@@ -305,7 +327,7 @@
    <button data-theme="cloud" aria-label="雲舞白" aria-pressed="false" title="雲舞白"><span style="--swatch:#f0eee9"></span></button>
   </div>
   <label class="exam-picker"><span class="sr-only">選擇考試範圍</span><select id="examSelect" aria-label="選擇考試範圍"><option value="first">第一次</option><option value="second" selected>第二次</option></select></label>
-  <button class="help-button" id="tipsButton" aria-label="讀書提示">讀書提示 <span aria-hidden="true">↗</span></button>
+  <button class="help-button" id="tipsButton" aria-label="操作導覽">操作導覽 <span aria-hidden="true">↗</span></button>
 </header>
 <section class="intro">
  <div><p class="eyebrow">A LITTLE EVERY TIME · 一次記一點</p><h1>選好科目，<br class="mobile-break">一步一步記起來。</h1><p class="intro-note">看圖、聽聲音，再試著自己想起來。</p></div>
@@ -2389,7 +2411,7 @@ $('examSelect').addEventListener('change',()=>{exam=EXAMS.find(e=>e.id===$('exam
 document.querySelector('.subject-switch').addEventListener('click',event=>{const b=event.target.closest('[data-subject]');if(b&&b.dataset.subject!==subject.id)changeSubject(b.dataset.subject);});
 $('groupSelect').value=state.group;$('groupSelect').addEventListener('change',selectChanged);$('filterSelect').addEventListener('change',selectChanged);
 $('shuffleButton').addEventListener('click',()=>{stopSpeech();setQueue(Study.shuffle(state.queue));renderStudy();setStatus('這一輪已換成隨機順序。');});
-$('tipsButton').addEventListener('click',()=>{$('tipsDialog').showModal();});
+document.addEventListener('study-tour-open',stopSpeech);
 $('closeTips').addEventListener('click',()=>{$('tipsDialog').close();});
 $('startStudy').addEventListener('click',()=>{$('tipsDialog').close();});
 $('tipsDialog').addEventListener('click',e=>{if(e.target===$('tipsDialog')){const r=e.target.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)e.target.close();}});
@@ -2409,6 +2431,100 @@ let savedTheme='green';try{savedTheme=localStorage.getItem('study-theme')||'gree
 applyTheme(savedTheme);
 document.querySelector('.theme-switch').addEventListener('click',event=>{const b=event.target.closest('button[data-theme]');if(!b)return;applyTheme(b.dataset.theme);try{localStorage.setItem('study-theme',b.dataset.theme);}catch{}});
 setQueue();render();
+})();
+</script>
+<script>(() => {
+ const page=document.querySelector('.page'),help=document.getElementById('tipsButton');
+ help.setAttribute('aria-label','操作導覽');help.title='隨時重播操作導覽';
+ help.firstChild.textContent='操作導覽 ';
+ const layer=document.createElement('div');layer.id='tour-layer';layer.hidden=true;
+ layer.innerHTML='<div class="tour-shade"></div><div class="tour-shade"></div><div class="tour-shade"></div><div class="tour-shade"></div><div class="tour-highlight"></div><section class="tour-bubble" role="dialog" aria-modal="true" aria-labelledby="tour-title" aria-describedby="tour-description"></section>';
+ document.body.append(layer);
+ const bubble=layer.querySelector('.tour-bubble'),highlight=layer.querySelector('.tour-highlight'),shades=[...layer.querySelectorAll('.tour-shade')];
+ const storageKey='word-garden-tutorial-v1';
+ let storage;try{storage=window.localStorage;}catch(_){}
+ const readStatus=()=>{try{return storage?.getItem(storageKey);}catch(_){return null;}};
+ function remember(status){try{if(status==='completed'||readStatus()!=='completed')storage?.setItem(storageKey,status);}catch(_){}}
+ let steps=[],index=-1,mode='welcome',previousFocus=null,previousScroll=[0,0];
+ const $=id=>document.getElementById(id);
+ const definitions=[
+  ['#examSelect','先選考試範圍','這裡切換第一次、第二次期中考。兩次的題庫與學習進度分開，先確認範圍再開始。'],
+  ['.subject-switch','再選練習科目','英語文與實用英文會話分開練習。右側數字是詞條數；「待加入」代表還沒有這科教材。'],
+  ['.tabs','三種使用方式','字卡練習用來認識單字；快速測驗檢查詞義辨認；全部單字可以搜尋。點不同分頁就能切換。'],
+  ['.toolbar','決定這輪讀什麼','左邊選課本單元或全部字，中間篩選還不熟的字，右邊「打亂」改變順序。'],
+  ['.card-face','先想，再翻面','先猜意思，再點圖文翻面，查看中文、詞形、記憶提示與例句。左右滑可以換字卡。'],
+  ['.card-navigation','換卡與自動聽讀','用左右箭頭換卡。「自動播放」會讀本科全部字的英文與中文、每字三遍；只是聽讀，不會增加熟悉度。'],
+  ['.card-audio','聽清楚，也讀出來','右下角聽單字，左下角慢速播放。翻面後，例句下方另有「聽例句」按鈕，朗讀整句。'],
+  ['.mark-row','記下這次的感覺','想不起來選「還不熟」，能想起來選「有印象」，接著換下一張。有印象仍需之後再回想。'],
+  ['.search-wrap','快速找到一個字','可以搜尋英文、中文或詞形。搜尋只限目前選定的考試和科目。'],
+  ['.word-list','從清單回到字卡','點任一詞條，就能查看完整字卡、記憶提示與發音。'],
+  ['.list-pagination','翻頁看更多單字','手機每頁顯示三個詞條；用上一頁、下一頁切換，保留清楚的字級。'],
+  ['.quiz-panel','快速測驗怎麼做','看英文，選最符合的中文意思。答完看回饋，再按下一題；結果頁可集中複習錯題。'],
+  ['.theme-switch','選舒服的配色','四個色點可以切換綠色、暖橘、莫蘭迪與雲舞白。配色會保存在這個瀏覽器。'],
+  ['#tipsButton','忘了操作，就按這裡','頂部的「？」可以隨時重播目前頁面的導覽。你也能從導覽入口查看加到手機主畫面的方式。']
+ ];
+ function visible(el){return el&&el.getBoundingClientRect().width>0&&el.getBoundingClientRect().height>0&&getComputedStyle(el).visibility!=='hidden';}
+ function buildSteps(){return definitions.filter(([selector])=>visible(document.querySelector(selector))).map(step=>{
+  const [selector]=step;
+  if(selector==='.toolbar'&&document.body.dataset.mode==='quiz')return [selector,'換範圍會重開測驗','可選課程與熟悉度；改動條件會重新開始本輪測驗。導覽只做說明，不會替你換題或清除答案。'];
+  if(selector==='.toolbar'&&document.body.dataset.mode==='list')return [selector,'縮小清單範圍','用課程與熟悉度篩選詞條，再用搜尋找到英文、中文或詞形。'];
+  if(selector==='.mark-row'&&document.querySelector('[data-action="repeat"]'))return [selector,'這輪字卡看完了','可以再看一輪，或用快速測驗檢查詞義。看過一輪不代表已經長期記住。'];
+  if(selector==='.quiz-panel'&&document.querySelector('.quiz-panel.results'))return [selector,'這輪練習的結果','查看本輪分數；有錯題時可集中複習。也能再測一次或返回字卡。'];
+  return step;
+ });}
+ function open(welcome=true){
+  if(!layer.hidden)return;
+  previousFocus=document.activeElement;previousScroll=[scrollX,scrollY];
+  document.dispatchEvent(new Event('study-tour-open'));
+  if($('tipsDialog').open)$('tipsDialog').close();
+  steps=buildSteps();index=0;mode=welcome?'welcome':'step';page.inert=true;layer.hidden=false;render();
+ }
+ function close(status='skipped'){remember(status);layer.hidden=true;page.inert=false;window.scrollTo(...previousScroll);const target=previousFocus?.isConnected&&visible(previousFocus)&&previousFocus!==document.body?previousFocus:help;target.focus({preventScroll:true});}
+ function actionButtons(){return `<div class="tour-actions"><button id="tour-previous" ${index===0?'disabled':''}>上一步</button><button id="tour-next" class="tour-primary">${index===steps.length-1?'完成導覽':'下一步 →'}</button></div>`;}
+ function render(){
+  if(mode==='welcome'){
+   bubble.innerHTML=`<div class="tour-kicker"><span>操作導覽</span><button class="tour-skip" id="tour-close">稍後再看</button></div><h2 id="tour-title">一起認識字感練習室。</h2><p id="tour-description">跟著亮起的區塊，看懂選課、字卡、發音與測驗。共 ${steps.length} 步，可以隨時略過，再從頂部「？」重播。</p><div class="tour-actions"><button id="tour-start" class="tour-primary">開始認識 →</button></div><div class="tour-links"><button id="tour-install">加到手機主畫面</button><button id="tour-tips">讀書提示</button></div><p class="tour-fine">完成或略過後，下次不會自動顯示；隨時可從「？」再開啟。</p>`;
+   $('tour-start').onclick=()=>{mode='step';index=0;render();};$('tour-install').onclick=()=>{mode='install';render();};$('tour-tips').onclick=()=>{close();$('tipsDialog').showModal();};$('tour-close').onclick=()=>close();
+  }else if(mode==='install'){
+   bubble.innerHTML='<div class="tour-kicker"><span>隨時從主畫面開啟</span><button class="tour-skip" id="tour-close">關閉</button></div><h2 id="tour-title">把練習室放到桌面。</h2><div id="tour-description"><p class="tour-device">iPhone／iPad · Safari</p><p>開啟網站 → 分享 → 加入主畫面 → 加入。若有「作為網頁 App 開啟」選項，可保持開啟。</p><p class="tour-device">Android · Chrome</p><p>開啟網站 → 右上角 ⋮ → 加入主畫面，或「安裝並建立捷徑」→ 依畫面確認。</p><p class="tour-fine">請在 Safari 或 Chrome 開啟正式網址；LINE 內建瀏覽器的選項可能不同。加入捷徑後仍需網路，進度不會自動跨裝置同步。</p></div><div class="tour-actions"><button id="tour-welcome">返回導覽入口</button></div>';
+   $('tour-welcome').onclick=()=>{mode='welcome';render();};$('tour-close').onclick=()=>close();
+  }else{
+   const [,title,description]=steps[index];
+   bubble.innerHTML=`<div class="tour-kicker"><span>操作導覽 ${index+1} / ${steps.length}</span><button class="tour-skip" id="tour-close">略過</button></div><h2 id="tour-title">${title}</h2><p id="tour-description">${description}</p>${actionButtons()}${index===steps.length-1?'<div class="tour-links"><button id="tour-install">加到手機主畫面</button><button id="tour-tips">讀書提示</button></div>':''}`;
+   $('tour-close').onclick=()=>close();$('tour-previous').onclick=()=>{index--;render();};$('tour-next').onclick=()=>{if(index===steps.length-1)close('completed');else{index++;render();}};
+   if($('tour-install'))$('tour-install').onclick=()=>{mode='install';render();};if($('tour-tips'))$('tour-tips').onclick=()=>{close();$('tipsDialog').showModal();};
+  }
+  place();const preferred=$('tour-start')||$('tour-next')||$('tour-welcome');preferred?.focus({preventScroll:true});
+ }
+ function rect(el){const r=el.getBoundingClientRect(),pad=5,clamp=(n,max)=>Math.max(4,Math.min(max-4,n));return {left:clamp(r.left-pad,innerWidth),top:clamp(r.top-pad,innerHeight),right:clamp(r.right+pad,innerWidth),bottom:clamp(r.bottom+pad,innerHeight)};}
+ function box(el,left,top,width,height){Object.assign(el.style,{left:left+'px',top:top+'px',width:Math.max(0,width)+'px',height:Math.max(0,height)+'px'});}
+ function place(){
+  if(layer.hidden)return;
+  let el=mode==='step'?document.querySelector(steps[index]?.[0]):null;
+  if(mode==='step'&&!visible(el)){const selector=steps[index]?.[0];steps=buildSteps();index=Math.max(0,steps.findIndex(s=>s[0]===selector));if(!steps.length){mode='welcome';}render();return;}
+  if(el){
+   if(innerWidth>720)el.scrollIntoView({block:'nearest',behavior:'instant'});
+   const r=rect(el),h=bubble.offsetHeight,w=bubble.offsetWidth;
+   box(shades[0],0,0,innerWidth,r.top);box(shades[1],0,r.top,r.left,r.bottom-r.top);box(shades[2],r.right,r.top,innerWidth-r.right,r.bottom-r.top);box(shades[3],0,r.bottom,innerWidth,innerHeight-r.bottom);
+   highlight.hidden=false;box(highlight,r.left,r.top,r.right-r.left,r.bottom-r.top);
+   let top=r.bottom+12;if(top+h>innerHeight-8)top=r.top-h-12;if(top<8)top=(r.top+r.bottom)/2>innerHeight/2?8:innerHeight-h-8;
+   bubble.style.left=Math.max(8,Math.min(innerWidth-w-8,r.left))+'px';bubble.style.top=Math.max(8,Math.min(innerHeight-h-8,top))+'px';
+  }else{
+   highlight.hidden=true;box(shades[0],0,0,innerWidth,innerHeight);shades.slice(1).forEach(e=>box(e,0,0,0,0));bubble.style.left=(innerWidth-bubble.offsetWidth)/2+'px';bubble.style.top=Math.max(8,(innerHeight-bubble.offsetHeight)/2)+'px';
+  }
+ }
+ help.addEventListener('click',()=>open(true));
+ document.addEventListener('keydown',event=>{
+  if(layer.hidden)return;
+  if(event.key==='Escape'){event.preventDefault();event.stopImmediatePropagation();close();return;}
+  if(event.key==='Tab'){
+   const buttons=[...bubble.querySelectorAll('button:not(:disabled)')],first=buttons[0],last=buttons.at(-1);
+   if(event.shiftKey&&document.activeElement===first){event.preventDefault();last.focus();}else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus();}
+  }
+  event.stopImmediatePropagation();
+ },true);
+ window.addEventListener('resize',place);window.addEventListener('scroll',place,{passive:true});
+ if(!['completed','skipped'].includes(readStatus()))open(true);
 })();
 </script>
 </body>
